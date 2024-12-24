@@ -1,0 +1,27 @@
+{
+    "name": "athenaevs/athenaevs-php",
+    "description": "PHP SDK for Athena EVS",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "AthenaEvs\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Athena Corp."
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "minimum-stability": "dev"
+}
