@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Acelle\Http\Controllers\Controller;
 use Acelle\Model\PlanGeneral;
 use Acelle\Library\Facades\Hook;
+use Illuminate\Support\Facades\Mail;
 
 class CustomerController extends Controller
 {
@@ -97,62 +98,84 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        // Get current user
-        $current_user = $request->user();
-        $customer = \Acelle\Model\Customer::newCustomer();
-        $contact = new \Acelle\Model\Contact();
+public function store(Request $request)
+{
+    // Get current user
+    $current_user = $request->user();
+    $customer = \Acelle\Model\Customer::newCustomer();
+    $contact = new \Acelle\Model\Contact();
 
-        // authorize
-        if (\Gate::denies('create', $customer)) {
-            return $this->notAuthorized();
+    // authorize
+    if (\Gate::denies('create', $customer)) {
+        return $this->notAuthorized();
+    }
+
+    // save posted data
+    if ($request->isMethod('post')) {
+        $user = new \Acelle\Model\User();
+        $user->fill($request->all());
+        $user->activated = true;
+
+        $this->validate($request, $user->rules());
+
+        // Update password
+        if (!empty($request->password)) {
+            $user->password = bcrypt($request->password);
         }
+        $user->save();
 
-        // save posted data
-        if ($request->isMethod('post')) {
-            $user = new \Acelle\Model\User();
-            $user->fill($request->all());
-            $user->activated = true;
+        // Save current user info
+        $customer->admin_id = $request->user()->admin->id;
+        $customer->fill($request->all());
+        $customer->status = 'active';
 
-            $this->validate($request, $user->rules());
-
-            // Update password
-            if (!empty($request->password)) {
-                $user->password = bcrypt($request->password);
-            }
+        if ($customer->save()) {
+            $user->customer_id = $customer->id;
             $user->save();
-
-            // Save current user info
-            $customer->admin_id = $request->user()->admin->id;
-            $customer->fill($request->all());
-            $customer->status = 'active';
-
-            if ($customer->save()) {
-                $user->customer_id = $customer->id;
-                $user->save();
-                // Upload and save image
-                if ($request->hasFile('image')) {
-                    if ($request->file('image')->isValid()) {
-                        // Remove old images
-                        $user->uploadProfileImage($request->file('image'));
-                    }
+            // Upload and save image
+            if ($request->hasFile('image')) {
+                if ($request->file('image')->isValid()) {
+                    // Remove old images
+                    $user->uploadProfileImage($request->file('image'));
                 }
-
-                // Remove image
-                if ($request->_remove_image == 'true') {
-                    $user->removeProfileImage();
-                }
-
-                // Execute registered hooks
-                Hook::execute('customer_added', [$customer]);
-
-                $request->session()->flash('alert-success', trans('messages.customer.created'));
-
-                return redirect()->action('Admin\CustomerController@index');
             }
+
+            // Remove image
+            if ($request->_remove_image == 'true') {
+                $user->removeProfileImage();
+            }
+
+            // Execute registered hooks
+            Hook::execute('customer_added', [$customer]);
+
+            // Prepare thank-you email content
+            $password = $request->password; // Get the plain text password from the request
+            $emailData = [
+                'customer' => $customer,
+                'email' => $user->email,
+                'password' => $password,
+            ];
+
+            // Print the mail content
+            //$emailContent = view('emails.customer_thank_you', $emailData)->render();
+            //echo $emailContent; // Print email content on the screen (for debugging)
+            //die;
+
+            // Uncomment the following line if you want to log the email content instead
+            // \Log::info('Mail content: ' . $emailContent);
+
+            // Send thank-you email
+            Mail::send('emails.customer_thank_you', $emailData, function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Thank You for Registering');
+            });
+
+            $request->session()->flash('alert-success', trans('messages.customer.created'));
+
+            return redirect()->action('Admin\CustomerController@index');
         }
     }
+}
 
     /**
      * Display the specified resource.

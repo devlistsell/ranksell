@@ -1,7 +1,6 @@
 @extends('layouts.core.backend', [
     'menu' => 'dashboard',
 ])
-
 @section('title', trans('messages.dashboard'))
 
 @section('head')
@@ -106,7 +105,7 @@
                             <div class="col-sm-8 col-md-8">
                                 <div class="d-flex">
                                     <div class="me-3">
-                                        <img width="40" class="rounded-circle shadow-sm me-2 pull-left" src="{{ $customer->user->getProfileImageUrl() }}" alt="">
+                                        
                                     </div>
                                     <div>
                                         <h6 class="mt-0 mb-0 text-semibold">

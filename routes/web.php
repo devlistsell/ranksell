@@ -1,5 +1,4 @@
 <?php
-
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -10,6 +9,8 @@
 | and give it the controller to call when that URI is requested.
 |
 */
+use Acelle\Http\Controllers\KeywordController;
+//use App\Http\Controllers\AccountController;
 
 // Installation
 Route::group(['middleware' => ['installed']], function () {
@@ -277,6 +278,14 @@ Route::group(['middleware' => ['not_installed', 'auth', '2fa']], function () {
 
 Route::group(['middleware' => ['not_installed', 'auth', 'frontend', '2fa']], function () {
     // Checkout
+    // Keywords routes
+    Route::get('account/keywords', 'KeywordController@keywordsListing')->name('keywords.listing');
+    Route::get('account/keyword-histories', 'KeywordController@keywordHistoryListing')->name('keywords.history.listing');
+    Route::get('account/search', 'KeywordController@index')->name('keywords.index');
+    //Route::get('account/keywords/{id}/edit', [KeywordController::class, 'edit'])->name('keywords.edit');
+    //Route::delete('account/keywords/{id}', [KeywordController::class, 'delete'])->name('keywords.delete');
+
+
     Route::get('checkout/{invoice_uid}/transactions/list', 'CheckoutController@transactionList');
     Route::get('checkout/{invoice_uid}/invoices/list', 'CheckoutController@invoiceList');
     Route::post('checkout/{invoice_uid}/cancel', 'CheckoutController@cancel');
@@ -1392,4 +1401,9 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['not_installed', 'auth', 
     Route::post('admin/translation/save', 'TranslationController@phrasesSave');
     Route::post('admin/translation/finish-write', 'TranslationController@phrasesFinishWrite');
     Route::post('admin/translation/{uid}/write', 'TranslationController@phrasesWrite');
+
+
 });
+
+
+
